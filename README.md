@@ -74,3 +74,7 @@ The website is a plain static page in [`docs/`](docs), served by GitHub Pages (S
 - Recognition uses Shazam's unofficial endpoint, which can change or be rate limited. Store reviewers may object to it; see [`store/listing.md`](store/listing.md).
 - The Firefox build is generated but not yet tested in Firefox.
 - Not affiliated with Shazam. "Shazam" is a trademark of its owner.
+
+## License
+
+[MIT](LICENSE) © 2026 Vasco Alves
