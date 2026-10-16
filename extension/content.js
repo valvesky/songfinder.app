@@ -19,6 +19,42 @@
     return out;
   }
 
+  // --- does the video have sound? GIFs served as MP4 (Tenor, Discord…) don't ------------
+
+  const audioCache = new WeakMap(); // video -> true | { recheckAt } (false)
+  for (const type of ["emptied", "loadstart"]) {
+    document.addEventListener(type, (e) => audioCache.delete(e.target), true); // new media, ask again
+  }
+
+  // true / false when we can tell, null when unknown (then we keep the video).
+  function hasAudio(v) {
+    const cached = audioCache.get(v);
+    if (cached === true) return true;
+    if (cached && Date.now() < cached.recheckAt) return false;
+    if (v.readyState < 2) return null;
+
+    let answer = null;
+    if (typeof v.mozHasAudio === "boolean") {
+      answer = v.mozHasAudio; // Firefox
+    } else {
+      let tracks = null;
+      try { tracks = v.captureStream().getAudioTracks().length; } catch {}
+      const decoded = v.webkitAudioDecodedByteCount; // Chromium
+      if (tracks > 0 || decoded > 0) answer = true;
+      else if (tracks === 0 && !decoded) {
+        // Streamed (MSE) players attach audio late: only trust "silent" once it has played a bit.
+        const streamed = (v.currentSrc || "").startsWith("blob:");
+        answer = streamed && v.currentTime < 2 ? null : false;
+      }
+    }
+    if (answer === true) audioCache.set(v, true);
+    else if (answer === false) audioCache.set(v, { recheckAt: Date.now() + 3000 });
+    return answer;
+  }
+
+  // Videos worth offering: everything except ones we know are silent.
+  const candidates = () => allVideos().filter((v) => hasAudio(v) !== false);
+
   function visibleArea(v) {
     const r = v.getBoundingClientRect();
     const w = Math.max(0, Math.min(r.right, innerWidth) - Math.max(r.left, 0));
@@ -196,7 +232,7 @@
       return;
     }
     const live = new Set();
-    for (const v of allVideos()) {
+    for (const v of candidates()) {
       const r = v.getBoundingClientRect();
       const ok = v.isConnected && r.width >= MIN_W && r.height >= MIN_H && visibleArea(v) > 0 &&
         getComputedStyle(v).visibility !== "hidden";
@@ -367,7 +403,7 @@
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     switch (msg?.type) {
       case "list-videos":
-        sendResponse(allVideos().map((v) => describe(v, true)));
+        sendResponse(candidates().map((v) => describe(v, true)));
         break;
       case "highlight": {
         const v = find(msg.id);

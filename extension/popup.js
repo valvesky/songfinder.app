@@ -43,7 +43,7 @@ async function load() {
   if (!found.length) {
     const empty = document.createElement("div");
     empty.className = "empty";
-    empty.textContent = "No videos found on this page.";
+    empty.textContent = "No videos with sound found on this page.";
     list.append(empty);
     return;
   }

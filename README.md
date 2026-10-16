@@ -9,6 +9,7 @@ Everything runs in the extension. No server, no account.
 
 1. The content script lists every `<video>` (iframes and shadow DOM included) and puts a small
    badge (the app icon) in the top-right corner of each. Toggle it from the popup (on by default).
+   Videos with no audio track (GIFs served as MP4, e.g. Tenor/Discord) are ignored.
 2. The popup ranks them (playing first, then largest). Hover a card to outline that exact video;
    the best guess is outlined on open.
 3. Clicking a badge, or "Identify song" in the popup, starts the video if it is paused, records ~10s of its audio (`captureStream`), decodes it to 16 kHz
