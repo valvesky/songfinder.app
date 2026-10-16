@@ -1,19 +1,11 @@
 <!doctype html>
 <meta charset="utf-8">
-<style>
-  :root { color-scheme: light dark; }
-  body { width: 340px; margin: 0; padding: 12px; font: 13px system-ui, sans-serif; }
-  h1 { font-size: 14px; margin: 0 0 8px; }
-  .video { border: 1px solid #8884; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
-  .video.best { border-color: #ff3b81; }
-  .meta { opacity: .7; font-size: 12px; margin: 2px 0 6px; }
-  button { padding: 5px 10px; border-radius: 6px; border: 0; background: #ff3b81; color: #fff; cursor: pointer; font-weight: 600; }
-  button:disabled { opacity: .5; cursor: default; }
-  .result { margin-top: 6px; font-weight: 600; }
-  .result a { font-weight: 400; }
-  .err { color: #e5484d; font-weight: 400; }
-  .empty { opacity: .7; }
-</style>
-<h1>♫ Video Song ID</h1>
-<div id="list"><div class="empty">Looking for videos…</div></div>
+<link rel="stylesheet" href="popup.css">
+<main>
+  <header>
+    <span class="logo">♫</span>
+    <h1>find<b>Song</b>.app</h1>
+  </header>
+  <div id="list"><div class="empty">Looking for videos…</div></div>
+</main>
 <script src="popup.js"></script>

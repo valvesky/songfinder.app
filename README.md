@@ -1,4 +1,4 @@
-# Video Song ID
+# findSong.app
 
 Chromium extension (Brave, Chrome, Edge…) that finds the video you're watching on any
 page (YouTube, X, anything with a `<video>`), outlines it so you know it's the right one,

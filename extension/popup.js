@@ -25,7 +25,11 @@ async function load() {
   found.sort(rank);
   list.replaceChildren();
   if (!found.length) {
-    list.innerHTML = '<div class="empty">No videos found on this page.</div>';
+    list.replaceChildren();
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "No videos found on this page.";
+    list.append(empty);
     return;
   }
   found.forEach((v, i) => list.appendChild(card(t.id, v, i)));
@@ -37,16 +41,23 @@ async function load() {
 function card(tabId, v, index) {
   const el = document.createElement("div");
   el.className = "video" + (index === 0 ? " best" : "");
-  const title = document.createElement("div");
-  title.textContent = `Video ${index + 1}${v.playing ? " — playing" : " — paused"}`;
+  const head = document.createElement("div");
+  head.className = "row";
+  const title = document.createElement("span");
+  title.className = "title";
+  title.textContent = `Video ${index + 1}`;
+  const pill = document.createElement("span");
+  pill.className = "pill" + (v.playing ? " live" : "");
+  pill.textContent = v.playing ? "● playing" : "paused";
+  head.append(title, pill);
   const meta = document.createElement("div");
   meta.className = "meta";
   meta.textContent = `${v.width}×${v.height}${v.muted ? " · muted" : ""} · ${v.time}s${v.duration ? "/" + v.duration + "s" : ""}`;
   const btn = document.createElement("button");
-  btn.textContent = "Identify song";
+  btn.textContent = "♫  Identify song";
   const out = document.createElement("div");
   out.className = "result";
-  el.append(title, meta, btn, out);
+  el.append(head, meta, btn, out);
 
   el.addEventListener("mouseenter", () =>
     ask(tabId, v.frameId, { type: "highlight", id: v.id, label: `Video ${index + 1}` }));

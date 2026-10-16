@@ -3,7 +3,7 @@
 # requires-python = ">=3.12,<3.13"
 # dependencies = ["shazamio==0.8.1"]
 # ///
-"""Local companion for the Video Song ID extension.
+"""Local companion for the findSong.app extension.
 
 POST /identify with raw audio bytes -> {"ok": true, "title", "artist", "url"}.
 Same pipeline as identify-song.py: ffmpeg -> 16 kHz mono WAV -> Shazam.
@@ -24,7 +24,7 @@ MAX_BYTES = 20 * 1024 * 1024
 
 
 async def recognize(data: bytes) -> dict:
-    with tempfile.TemporaryDirectory(prefix="video-song-id-") as directory:
+    with tempfile.TemporaryDirectory(prefix="findsong-app-") as directory:
         src, wav = Path(directory) / "in.bin", Path(directory) / "audio.wav"
         src.write_bytes(data)
         result = subprocess.run(
@@ -51,7 +51,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(payload)
 
     def do_GET(self) -> None:
-        self._send(200, {"ok": True, "service": "video-song-id"})
+        self._send(200, {"ok": True, "service": "findsong-app"})
 
     def do_POST(self) -> None:
         if self.path != "/identify":
