@@ -27,7 +27,7 @@ header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px;
   background: var(--glass-hi); border: 1px solid var(--edge); font-size: 15px;
 }
-h1 { margin: 0; font-size: 14px; font-weight: 500; letter-spacing: .2px; }
+h1 { flex: 1; margin: 0; font-size: 14px; font-weight: 500; letter-spacing: .2px; }
 h1 b { font-weight: 800; }
 
 .video {
@@ -70,3 +70,12 @@ button:disabled { opacity: .45; cursor: default; }
   padding: 18px; text-align: center; color: var(--muted); border-radius: var(--radius);
   background: var(--glass); border: 1px dashed var(--edge);
 }
+
+.switch { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--muted); font-size: 11px; }
+.switch input { display: none; }
+.track { width: 34px; height: 20px; border-radius: 999px; background: var(--glass-hi); border: 1px solid var(--edge); position: relative; transition: background .15s; }
+.track i { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); transition: transform .15s, background .15s; }
+.switch input:checked + .track { background: rgba(255, 255, 255, .28); }
+.switch input:checked + .track i { transform: translateX(14px); background: #fff; }
+.buttons { display: flex; gap: 8px; }
+button.ghost { width: 44px; flex: none; background: var(--glass-hi); color: var(--fg); }

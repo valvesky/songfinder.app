@@ -7,10 +7,11 @@ Everything runs in the extension. No server, no account.
 
 ## How it works
 
-1. The content script lists every `<video>` (iframes and shadow DOM included).
+1. The content script lists every `<video>` (iframes and shadow DOM included) and puts a small
+   badge (the app icon) in the top-right corner of each. Toggle it from the popup (on by default).
 2. The popup ranks them (playing first, then largest). Hover a card to outline that exact video;
    the best guess is outlined on open.
-3. "Identify song" records ~10s of that video's audio (`captureStream`), decodes it to 16 kHz
+3. Clicking a badge, or "Identify song" in the popup, starts the video if it is paused, records ~10s of its audio (`captureStream`), decodes it to 16 kHz
    mono, builds a Shazam signature in JS (`extension/lib/shazam.js`, port of the open signature
    algorithm, verified against `shazamio`) and the background worker looks it up.
 
@@ -21,7 +22,7 @@ Everything runs in the extension. No server, no account.
 node test/shazam.test.mjs some-song.opus      # fingerprint + lookup from a file
 node test/e2e.mjs <dir-with-index.html>       # real Chromium, loads the extension
 tools/build.sh                                # dist/findSong-{chrome,firefox}-<version>.zip
-node tools/render.mjs && node tools/promo.mjs # icons, X card, store screenshot
+node tools/promo.mjs                          # X card, store screenshot
 ```
 
 ## Limitations

@@ -18,7 +18,7 @@ const server = createServer((req, res) => {
 const ctx = await chromium.launchPersistentContext("", {
   executablePath: "/usr/bin/chromium",
   headless: false,
-  args: ["--headless=new", `--disable-extensions-except=${ext}`, `--load-extension=${ext}`, "--autoplay-policy=no-user-gesture-required", "--no-sandbox"],
+  args: ["--headless=new", `--disable-extensions-except=${ext}`, `--load-extension=${ext}`, "--no-sandbox"],
 });
 const page = await ctx.newPage();
 page.on("requestfailed", (r) => console.log("failed", r.url())); page.on("response", (r) => r.status() >= 400 && console.log(r.status(), r.url()));
@@ -35,7 +35,17 @@ const send = (msg) => sw.evaluate(async (m) => {
 const vids = await send({ type: "list-videos" });
 console.log("videos:", vids);
 const best = [...vids].sort((a, b) => b.playing - a.playing || b.visibleArea - a.visibleArea)[0];
-const pending = send({ type: "identify", id: best.id });
+await page.screenshot({ path: process.argv[3].replace(".png", "-idle.png") });
+const mode = process.env.MODE || "message";
+let pending;
+if (mode === "click") {
+  // real user click on the on-page badge (closed shadow root: click by position)
+  const box = await page.evaluate(() => { const r = document.querySelector("#song").getBoundingClientRect(); return { x: r.right - 27, y: r.top + 27 }; });
+  await page.mouse.click(box.x, box.y);
+  pending = new Promise((r) => setTimeout(r, 14000)).then(() => "clicked; see screenshots");
+} else pending = send({ type: "identify", id: best.id });
 if (process.argv[3]) { await page.waitForTimeout(4000); await page.screenshot({ path: process.argv[3] }); }
 console.log("result:", await pending);
+if (mode === "click") await page.screenshot({ path: process.argv[3].replace(".png", "-result.png") });
+console.log("paused after:", await page.evaluate(() => document.querySelector("#song").paused));
 await ctx.close(); server.close();

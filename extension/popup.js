@@ -55,9 +55,24 @@ function card(tabId, v, index) {
   meta.textContent = `${v.width}×${v.height}${v.muted ? " · muted" : ""} · ${v.time}s${v.duration ? "/" + v.duration + "s" : ""}`;
   const btn = document.createElement("button");
   btn.textContent = "♫  Identify song";
+  const play = document.createElement("button");
+  play.className = "ghost";
+  play.title = "Play / pause this video";
+  play.textContent = v.playing ? "❚❚" : "▶";
+  const buttons = document.createElement("div");
+  buttons.className = "buttons";
+  buttons.append(play, btn);
   const out = document.createElement("div");
   out.className = "result";
-  el.append(head, meta, btn, out);
+  el.append(head, meta, buttons, out);
+
+  play.addEventListener("click", async () => {
+    const now = await ask(tabId, v.frameId, { type: "toggle-play", id: v.id });
+    if (!now) return;
+    play.textContent = now.playing ? "❚❚" : "▶";
+    pill.className = "pill" + (now.playing ? " live" : "");
+    pill.textContent = now.playing ? "● playing" : "paused";
+  });
 
   el.addEventListener("mouseenter", () =>
     ask(tabId, v.frameId, { type: "highlight", id: v.id, label: `Video ${index + 1}` }));
@@ -65,7 +80,7 @@ function card(tabId, v, index) {
 
   btn.addEventListener("click", async () => {
     btn.disabled = true;
-    out.textContent = "Listening for ~10s (keep the video playing)…";
+    out.textContent = v.playing ? "Listening for ~10s…" : "Starting the video and listening for ~10s…";
     const res = await ask(tabId, v.frameId, { type: "identify", id: v.id });
     btn.disabled = false;
     out.replaceChildren();
@@ -86,5 +101,9 @@ function card(tabId, v, index) {
   });
   return el;
 }
+
+const overlay = document.getElementById("overlay");
+chrome.storage.sync.get({ overlay: true }).then((o) => (overlay.checked = o.overlay));
+overlay.addEventListener("change", () => chrome.storage.sync.set({ overlay: overlay.checked }));
 
 load();
