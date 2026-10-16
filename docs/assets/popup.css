@@ -23,10 +23,7 @@ body {
 }
 main { padding: 14px; }
 header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.logo {
-  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px;
-  background: var(--glass-hi); border: 1px solid var(--edge); font-size: 15px;
-}
+.logo { width: 30px; height: 30px; border-radius: 9px; display: block; }
 h1 { flex: 1; margin: 0; font-size: 14px; font-weight: 500; letter-spacing: .2px; }
 h1 b { font-weight: 800; }
 
