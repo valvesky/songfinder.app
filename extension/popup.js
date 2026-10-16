@@ -6,6 +6,10 @@ const ICON = {
   note: '<svg viewBox="0 0 24 24"><path d="M9 17.5V6.2l10-2.2v10.5"/><circle cx="6.8" cy="17.5" r="2.7"/><circle cx="16.8" cy="14.5" r="2.7"/></svg>',
 };
 
+// Build an icon as DOM nodes (no innerHTML).
+const iconNode = (name) => document.importNode(new DOMParser().parseFromString(
+  ICON[name].replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" '), "image/svg+xml").documentElement, true);
+
 const MIN_LEN = 3, MAX_LEN = 30, DEFAULT_LEN = 10, SHORT_CLIP = 15;
 
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
@@ -179,10 +183,12 @@ function card(tabId, v, index) {
   const play = document.createElement("button");
   play.className = "ghost";
   play.title = "Play / pause this video";
-  play.innerHTML = v.playing ? ICON.pause : ICON.play;
+  play.replaceChildren(iconNode(v.playing ? "pause" : "play"));
   const btn = document.createElement("button");
   btn.className = "main";
-  btn.innerHTML = `${ICON.note}<span>Identify song</span>`;
+  const label = document.createElement("span");
+  label.textContent = "Identify song";
+  btn.append(iconNode("note"), label);
   const buttons = document.createElement("div");
   buttons.className = "buttons";
   buttons.append(play, btn);
@@ -193,7 +199,7 @@ function card(tabId, v, index) {
   play.addEventListener("click", async () => {
     const now = await ask(tabId, v.frameId, { type: "toggle-play", id: v.id });
     if (!now) return;
-    play.innerHTML = now.playing ? ICON.pause : ICON.play;
+    play.replaceChildren(iconNode(now.playing ? "pause" : "play"));
     setPill(now.playing);
   });
 

@@ -19,14 +19,14 @@ m = json.load(open(p))
 m["background"] = {"scripts": ["lib/shazam.js", "background.js"]}
 m["browser_specific_settings"] = {"gecko": {
     "id": "songfinder@songfinder.app",
-    "strict_min_version": "140.0",
+    "strict_min_version": "142.0",
     # the audio fingerprint of what the user chooses to identify is sent to a recognition service
     "data_collection_permissions": {"required": ["websiteContent"]},
 }}
 json.dump(m, open(p, "w"), indent=2)
 PY
 
-# fixed timestamps + sorted names so the same source gives the same zip
+# sorted entries, no extra file attributes (-X)
 (cd dist/chrome  && find . -type f | sort | sed 's|^\./||' | TZ=UTC zip -qX -@ "../songfinder-chrome-$VERSION.zip")
 (cd dist/firefox && find . -type f | sort | sed 's|^\./||' | TZ=UTC zip -qX -@ "../songfinder-firefox-$VERSION.zip")
 git archive --format=zip --prefix="songfinder.app-$VERSION/" -o "dist/songfinder-source-$VERSION.zip" HEAD
