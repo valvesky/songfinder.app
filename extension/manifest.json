@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Video Song ID",
+  "version": "0.1.0",
+  "description": "Detect the video playing on any page, highlight it, and identify the music in it.",
+  "permissions": ["activeTab", "webNavigation", "storage"],
+  "host_permissions": ["http://127.0.0.1/*", "http://localhost/*"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "Video Song ID", "default_popup": "popup.html" },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "all_frames": true,
+      "match_about_blank": true,
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": { "128": "icons/icon.png" }
+}
