@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="extension/icons/icon128.png" width="112" alt="songfinder.app icon">
+  <img src="docs/assets/icon.png" width="128" alt="songfinder.app icon">
 </p>
 
 <h1 align="center">songfinder.app</h1>
