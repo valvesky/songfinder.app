@@ -11,10 +11,13 @@ import json
 p = "dist/firefox/manifest.json"
 m = json.load(open(p))
 m["background"] = {"scripts": ["lib/shazam.js", "background.js"]}
-m["browser_specific_settings"] = {"gecko": {"id": "findsong@findsong.app", "strict_min_version": "128.0",
+m["browser_specific_settings"] = {"gecko": {"id": "songfinder@songfinder.app", "strict_min_version": "128.0",
     "data_collection_permissions": {"required": ["websiteContent"]}}}
 json.dump(m, open(p, "w"), indent=2)
 PY
-(cd dist/chrome  && zip -qr "../findSong-chrome-$VERSION.zip" .)
-(cd dist/firefox && zip -qr "../findSong-firefox-$VERSION.zip" .)
+(cd dist/chrome  && zip -qr "../songfinder-chrome-$VERSION.zip" .)
+(cd dist/firefox && zip -qr "../songfinder-firefox-$VERSION.zip" .)
 ls -l dist/*.zip
+
+# keep the website's copy of the popup styles in sync
+cp extension/popup.css docs/assets/popup.css

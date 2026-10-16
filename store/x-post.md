@@ -2,7 +2,7 @@
 
 Heard a banger in a video and had no idea what it was?
 
-findSong.app names the song in any video, on any site.
+songfinder.app names the song in any video, on any site.
 
 → outlines the exact video (even with 5 on the page)
 → listens for 10 seconds
@@ -10,7 +10,7 @@ findSong.app names the song in any video, on any site.
 
 No server. No account. Just a browser extension.
 
-findsong.app · open source
+songfinder.app · open source
 
 ---
 

@@ -206,5 +206,5 @@ const BANDS = [[250, 520], [520, 1450], [1450, 3500]];
     return { ok: true, title: track.title, artist: track.subtitle, url: track.url || null };
   }
 
-  root.FindSongShazam = { makeSignature, lookup, findPeaks };
+  root.SongFinderShazam = { makeSignature, lookup, findPeaks };
 })(typeof globalThis !== "undefined" ? globalThis : self);

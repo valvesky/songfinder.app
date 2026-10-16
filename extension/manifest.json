@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "findSong.app",
+  "name": "songfinder.app",
   "version": "0.4.1",
   "description": "Find the song playing in any video. Outlines the video, listens for 10 seconds, names the track.",
   "permissions": [
@@ -15,7 +15,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "findSong.app",
+    "default_title": "songfinder.app",
     "default_popup": "popup.html"
   },
   "content_scripts": [

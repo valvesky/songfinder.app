@@ -1,7 +1,7 @@
 // Finds <video> elements, shows a badge on each, records the chosen video's audio, names the song.
 (() => {
-  if (window.__findSong) return;
-  window.__findSong = true;
+  if (window.__songFinder) return;
+  window.__songFinder = true;
 
   const RECORD_MS = 10000;
   const MIN_W = 160, MIN_H = 90; // ignore tiny videos (ads, previews, icons)
@@ -373,7 +373,7 @@
       clearInterval(progress);
       setBusy(v, "…");
       highlight(v, "♫ Matching…", 0);
-      const signature = FindSongShazam.makeSignature(await toSamples(blob));
+      const signature = SongFinderShazam.makeSignature(await toSamples(blob));
       const res = (await chrome.runtime.sendMessage({ type: "lookup", signature })) || { ok: false, error: "No response" };
       showResult(v, res);
       return res;

@@ -1,11 +1,11 @@
 # Store listing
 
-**Name:** findSong.app
+**Name:** songfinder.app
 **Short description (≤132 chars):** Name the song playing in any video. Outlines the right video, listens for 10 seconds, shows the track.
 
 **Detailed description**
 
-Hear a great track in a video and want to know what it is? findSong.app identifies the
+Hear a great track in a video and want to know what it is? songfinder.app identifies the
 music in any video on any website: YouTube, X, Reddit, news sites, streams, embeds.
 
 • A small button on every video: one click and it names the song (switch it off in the popup)
@@ -29,4 +29,4 @@ music recognition service. The video, the page and your browsing history are nev
 - Content script on all sites: detect `<video>` elements and outline the chosen one.
 
 **Assets:** `store/screenshot.png` (1280×800), `extension/icons/icon128.png`.
-Trademark note: "Shazam" is a trademark of its owner; findSong.app is not affiliated with it.
+Trademark note: "Shazam" is a trademark of its owner; songfinder.app is not affiliated with it.

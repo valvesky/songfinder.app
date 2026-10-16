@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>songfinder.app: name the song in any video</title>
+<meta name="description" content="A browser extension for Brave, Chrome, Edge and Firefox that outlines the video you're watching, listens for a few seconds and names the song. No server, no account.">
+<link rel="icon" href="assets/icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="songfinder.app: name the song in any video">
+<meta property="og:description" content="One click on any video. Outlines the right one, listens, names the track.">
+<meta property="og:image" content="https://valvesky.github.io/songfinder.app/assets/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="./"><img src="assets/icon.png" alt=""><span>song<b>finder</b>.app</span></a>
+    <div class="links"><a href="#features">Features</a><a href="#install">Install</a><a href="privacy.html">Privacy</a>
+      <a class="keep" href="https://github.com/valvesky/songfinder.app">GitHub ↗</a></div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <h1>Name that <em>song</em> in any video.</h1>
+      <p class="lead">Hear a banger in a YouTube clip, an X post or a stream? One click outlines the exact video, listens for a few seconds and tells you the track.</p>
+      <div class="cta">
+        <a class="btn primary" href="#install">Install the extension</a>
+        <a class="btn" href="https://github.com/valvesky/songfinder.app">View on GitHub ↗</a>
+      </div>
+      <div class="chips"><span>Brave</span><span>Chrome</span><span>Edge</span><span>Firefox</span><span>No server · no account</span></div>
+    </div>
+    <div class="scene" aria-hidden="true">
+      <div class="vid">
+        <div class="tag">♫ Mmm Yeah
+Austin Mahone &amp; Pitbull</div>
+        <div class="badge"><img src="assets/icon.png" alt=""></div>
+        <div class="bars"><i style="height:30%;animation-delay:-0.00s"></i><i style="height:55%;animation-delay:-0.13s"></i><i style="height:80%;animation-delay:-0.26s"></i><i style="height:45%;animation-delay:-0.39s"></i><i style="height:90%;animation-delay:-0.52s"></i><i style="height:60%;animation-delay:-0.65s"></i><i style="height:35%;animation-delay:-0.78s"></i><i style="height:75%;animation-delay:-0.91s"></i><i style="height:50%;animation-delay:-1.04s"></i><i style="height:95%;animation-delay:-1.17s"></i><i style="height:40%;animation-delay:-1.30s"></i><i style="height:70%;animation-delay:-1.43s"></i><i style="height:85%;animation-delay:-1.56s"></i><i style="height:30%;animation-delay:-1.69s"></i><i style="height:60%;animation-delay:-1.82s"></i><i style="height:80%;animation-delay:-1.95s"></i><i style="height:45%;animation-delay:-2.08s"></i><i style="height:65%;animation-delay:-2.21s"></i><i style="height:90%;animation-delay:-2.34s"></i><i style="height:50%;animation-delay:-2.47s"></i><i style="height:35%;animation-delay:-2.60s"></i><i style="height:70%;animation-delay:-2.73s"></i></div>
+      </div>
+      <div class="popup"><iframe src="assets/demo.html" title="songfinder.app popup" tabindex="-1"></iframe></div>
+    </div>
+  </header>
+
+  <section id="features">
+    <h2>Made for pages full of videos</h2>
+    <p class="sub">Small, quick and out of the way until you need it.</p>
+    <div class="grid">
+      <div class="card"><div class="ico">◉</div><h3>A button on every video</h3><p>A small glass badge in the top-right corner. One click names the song. Switch it off from the popup if you prefer.</p></div>
+      <div class="card"><div class="ico">▢</div><h3>Knows which video</h3><p>The video it will listen to gets outlined, so it is never a guess. Hover a card in the popup to see which is which.</p></div>
+      <div class="card"><div class="ico">▶</div><h3>Starts it for you</h3><p>Paused or muted? It plays, unmutes, listens, then puts things back the way they were.</p></div>
+      <div class="card"><div class="ico">↔</div><h3>Pick the part to hear</h3><p>Drag two dots on the timeline, or type a start and end time, for the moment the song actually plays.</p></div>
+      <div class="card"><div class="ico">∅</div><h3>Skips GIFs</h3><p>Videos with no audio track, like Tenor and Discord GIFs served as MP4, are ignored. No clutter.</p></div>
+      <div class="card"><div class="ico">⌁</div><h3>Nothing to run</h3><p>Everything happens inside the extension. No server, no account. Only a tiny audio fingerprint is sent for lookup.</p></div>
+    </div>
+  </section>
+
+  <section class="steps">
+    <h2>How it works</h2>
+    <p class="sub">Three steps, about ten seconds.</p>
+    <div class="grid">
+      <div class="card"><span class="num">01</span><h3>Spot the video</h3><p>It finds every video with sound on the page, including ones inside iframes, and badges them.</p></div>
+      <div class="card"><span class="num">02</span><h3>Listen</h3><p>It records the audio of just that video, 10 seconds by default, and turns it into a fingerprint on your device.</p></div>
+      <div class="card"><span class="num">03</span><h3>Name it</h3><p>The fingerprint is matched and the title and artist appear on the video, with a link to the track.</p></div>
+    </div>
+  </section>
+
+  <section id="install">
+    <h2>Install</h2>
+    <p class="sub">Not on the stores yet. Load it unpacked in a minute.</p>
+    <div class="install">
+      <div class="card"><h3>Brave · Chrome · Edge</h3>
+        <ol><li>Download or clone the <a href="https://github.com/valvesky/songfinder.app">repository</a>.</li>
+        <li>Open <code>brave://extensions</code> and turn on <b>Developer mode</b>.</li>
+        <li>Click <b>Load unpacked</b> and choose the <code>extension/</code> folder.</li></ol></div>
+      <div class="card"><h3>Firefox</h3>
+        <ol><li>Build the Firefox package:</li></ol>
+        <pre>git clone https://github.com/valvesky/songfinder.app
+cd songfinder.app &amp;&amp; tools/build.sh</pre>
+        <ol start="2"><li>Open <code>about:debugging</code> → <b>This Firefox</b> → <b>Load Temporary Add-on</b>.</li>
+        <li>Pick <code>dist/firefox/manifest.json</code>.</li></ol></div>
+    </div>
+    <p class="note">Recognition uses Shazam's unofficial endpoint, so it may change over time. songfinder.app is not affiliated with Shazam.</p>
+  </section>
+
+  <section>
+    <div class="card privacy">
+      <div><h2 style="font-size:28px">Private by design</h2>
+      <p>The video, the page and your history never leave your browser. Only a spectral fingerprint of the chosen segment is sent, and only when you press the button.</p></div>
+      <a class="btn" href="privacy.html">Read the policy</a>
+    </div>
+  </section>
+
+  <footer>
+    <span>© songfinder.app</span>
+    <span><a href="https://github.com/valvesky/songfinder.app">GitHub</a> · <a href="privacy.html">Privacy</a></span>
+  </footer>
+</div>
+</body>
+</html>
