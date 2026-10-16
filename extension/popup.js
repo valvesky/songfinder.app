@@ -65,7 +65,7 @@ function card(tabId, v, index) {
 
   btn.addEventListener("click", async () => {
     btn.disabled = true;
-    out.textContent = "Listening for ~12s (keep the video playing)…";
+    out.textContent = "Listening for ~10s (keep the video playing)…";
     const res = await ask(tabId, v.frameId, { type: "identify", id: v.id });
     btn.disabled = false;
     out.replaceChildren();

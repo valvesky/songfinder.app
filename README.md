@@ -19,7 +19,7 @@ Based on `identify-song.py` (ffmpeg → 16 kHz WAV → `shazamio`).
 
 ```sh
 # 1. companion server (needs uv + ffmpeg)
-./server/identify_server.py            # http://127.0.0.1:8765
+-            # http://127.0.0.1:8765
 
 # 2. extension
 # brave://extensions → Developer mode → Load unpacked → select ./extension

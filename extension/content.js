@@ -3,7 +3,7 @@
   if (window.__videoSongId) return;
   window.__videoSongId = true;
 
-  const RECORD_MS = 12000;
+  const RECORD_MS = 10000;
   const ids = new WeakMap();
   let nextId = 1;
   const idOf = (v) => (ids.has(v) || ids.set(v, nextId++), ids.get(v));
@@ -82,20 +82,11 @@
 
   // --- capture + identify --------------------------------------------------
 
-  function toBase64(buf) {
-    let s = "";
-    const bytes = new Uint8Array(buf);
-    for (let i = 0; i < bytes.length; i += 0x8000) {
-      s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    }
-    return btoa(s);
-  }
-
   async function record(v) {
     const stream = (v.captureStream || v.mozCaptureStream).call(v);
     const audio = stream.getAudioTracks();
     if (!audio.length) throw new Error("This video exposes no audio track (cross-origin or DRM?)");
-    const rec = new MediaRecorder(new MediaStream(audio), { mimeType: "audio/webm;codecs=opus" });
+    const rec = new MediaRecorder(new MediaStream(audio));
     const chunks = [];
     rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
     const done = new Promise((res) => (rec.onstop = res));
@@ -103,12 +94,27 @@
     await new Promise((r) => setTimeout(r, RECORD_MS));
     rec.stop();
     await done;
-    return new Blob(chunks, { type: "audio/webm" });
+    return new Blob(chunks, { type: rec.mimeType });
+  }
+
+  // Decode + resample to 16 kHz mono, which is what the fingerprinter expects.
+  async function toSamples(blob) {
+    const ctx = new AudioContext({ sampleRate: 16000 });
+    try {
+      const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+      const mono = new Float32Array(buf.length);
+      for (let c = 0; c < buf.numberOfChannels; c++) {
+        const ch = buf.getChannelData(c);
+        for (let i = 0; i < ch.length; i++) mono[i] += ch[i] / buf.numberOfChannels;
+      }
+      return mono;
+    } finally {
+      ctx.close();
+    }
   }
 
   async function identify(v) {
     if (!isPlaying(v)) throw new Error("Video is not playing. Press play first.");
-    let tick = 0;
     const started = Date.now();
     const progress = setInterval(() => {
       const left = Math.max(0, Math.ceil((RECORD_MS - (Date.now() - started)) / 1000));
@@ -121,11 +127,8 @@
       clearInterval(progress);
     }
     highlight(v, "♫ Matching…", 0);
-    const res = await chrome.runtime.sendMessage({
-      type: "identify-audio",
-      mime: blob.type,
-      base64: toBase64(await blob.arrayBuffer()),
-    });
+    const signature = FindSongShazam.makeSignature(await toSamples(blob));
+    const res = await chrome.runtime.sendMessage({ type: "lookup", signature });
     if (!res?.ok) {
       highlight(v, "♫ " + (res?.error || "No song matched"), 6000);
       return res || { ok: false, error: "No response" };
