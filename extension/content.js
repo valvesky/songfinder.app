@@ -5,6 +5,7 @@
 
   const RECORD_MS = 10000;
   const MIN_W = 160, MIN_H = 90; // ignore tiny videos (ads, previews, icons)
+  const SHORT_CLIP = 15; // seconds: clips this short are replayed from the start before listening
   const ICON = chrome.runtime.getURL("icons/icon48.png");
 
   const ids = new WeakMap();
@@ -26,22 +27,27 @@
     document.addEventListener(type, (e) => audioCache.delete(e.target), true); // new media, ask again
   }
 
+  // Looks like a GIF: muted, looping, no player controls.
+  const gifLike = (v) => v.muted && v.loop && !v.controls;
+
   // true / false when we can tell, null when unknown (then we keep the video).
   function hasAudio(v) {
     const cached = audioCache.get(v);
     if (cached === true) return true;
     if (cached && Date.now() < cached.recheckAt) return false;
-    if (v.readyState < 2) return null;
+    if (v.readyState < 2) return gifLike(v) ? false : null; // not loaded yet: go by looks
 
     let answer = null;
     if (typeof v.mozHasAudio === "boolean") {
       answer = v.mozHasAudio; // Firefox
     } else {
+      // captureStream lists the audio tracks, but throws for cross-origin media (most CDN-hosted
+      // MP4s, e.g. Tenor). The decoded-audio counter still works there, so use it too.
       let tracks = null;
       try { tracks = v.captureStream().getAudioTracks().length; } catch {}
       const decoded = v.webkitAudioDecodedByteCount; // Chromium
       if (tracks > 0 || decoded > 0) answer = true;
-      else if (tracks === 0 && !decoded) {
+      else if (!decoded) {
         // Streamed (MSE) players attach audio late: only trust "silent" once it has played a bit.
         const streamed = (v.currentSrc || "").startsWith("blob:");
         answer = streamed && v.currentTime < 2 ? null : false;
@@ -136,8 +142,14 @@
     .glass{background:rgba(18,18,18,.55);border:1px solid rgba(255,255,255,.22);
       backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%);
       box-shadow:0 8px 24px rgba(0,0,0,.4)}
-    .outline{position:absolute;border:2px solid rgba(255,255,255,.9);border-radius:18px;opacity:0;pointer-events:none;
-      box-shadow:0 0 0 2px rgba(0,0,0,.55),0 0 28px rgba(255,255,255,.55);transition:opacity .2s}
+    .outline{position:absolute;border:3px solid rgba(255,255,255,.95);border-radius:18px;opacity:0;pointer-events:none;
+      transition:opacity .2s;
+      /* inner glows stay visible even when the player clips overflow; outer ones when it doesn't */
+      box-shadow:0 0 0 2px rgba(0,0,0,.5),0 0 34px 6px rgba(255,255,255,.75),0 0 90px 22px rgba(140,174,214,.5),
+        inset 0 0 38px 6px rgba(255,255,255,.4),inset 0 0 110px 20px rgba(140,174,214,.35)}
+    .outline.listen{animation:pulse 1.2s ease-in-out infinite alternate}
+    @keyframes pulse{from{filter:brightness(.8)}to{filter:brightness(1.3)}}
+    @media (prefers-reduced-motion:reduce){.outline.listen{animation:none}}
     .tag{position:absolute;left:12px;top:12px;max-width:calc(100% - 24px);padding:8px 14px;border-radius:14px;white-space:pre-wrap}
     .slot{position:absolute;right:10px;top:10px;width:max-content;max-width:320px;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
     .badge{color:#eeeae4;font:inherit;pointer-events:auto;position:relative;width:34px;height:34px;padding:0;border-radius:11px;cursor:pointer;
@@ -296,6 +308,7 @@
       tag.textContent = label;
       slot.outline.append(tag);
     }
+    slot.outline.classList.toggle("listen", /Listening/.test(label || ""));
     slot.outline.style.opacity = "1";
     clearTimeout(outlineTimer);
     if (ms) outlineTimer = setTimeout(unhighlight, ms);
@@ -370,7 +383,12 @@
   }
 
   async function record(v, ms) {
-    const stream = (v.captureStream || v.mozCaptureStream).call(v);
+    let stream;
+    try {
+      stream = (v.captureStream || v.mozCaptureStream).call(v);
+    } catch {
+      throw new Error("This site doesn't let extensions read this video's audio (it is hosted on another domain).");
+    }
     const audio = stream.getAudioTracks();
     if (!audio.length) throw new Error("This video exposes no audio track (cross-origin or DRM?)");
     const rec = new MediaRecorder(new MediaStream(audio));
@@ -414,7 +432,11 @@
   async function identify(v, opts = {}) {
     if (busy.has(v)) return { ok: false, error: "Already listening." };
     busy.add(v);
-    const ms = Math.min(30, Math.max(3, opts.length || RECORD_MS / 1000)) * 1000;
+    const dur = isFinite(v.duration) ? v.duration : null;
+    const short = dur !== null && dur <= SHORT_CLIP;
+    const start = typeof opts.start === "number" ? opts.start : short ? 0 : null;
+    const length = opts.length || (short ? Math.min(RECORD_MS / 1000, dur) : RECORD_MS / 1000);
+    const ms = Math.min(30, Math.max(3, length)) * 1000;
     const prevTime = v.currentTime;
     let startedIt = false, seeked = false, started = 0;
     const progress = setInterval(() => {
@@ -426,7 +448,7 @@
     try {
       slots.get(v)?.result?.remove();
       startedIt = await ensurePlaying(v);
-      if (typeof opts.start === "number") { seeked = true; await seek(v, opts.start); }
+      if (start !== null) { seeked = true; await seek(v, start); }
       started = Date.now();
       const blob = await record(v, ms);
       clearInterval(progress);

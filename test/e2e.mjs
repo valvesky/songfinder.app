@@ -7,7 +7,7 @@ import { join } from "node:path";
 const { chromium } = createRequire("/home/raw/.local/share/mise/installs/npm-playwright/latest/node_modules/")("playwright");
 const dir = process.argv[2];
 const ext = new URL("../extension", import.meta.url).pathname;
-const types = { ".html": "text/html", ".webm": "video/webm" };
+const types = { ".html": "text/html", ".webm": "video/webm", ".mp4": "video/mp4" };
 const server = createServer((req, res) => {
   const f = join(dir, req.url === "/" ? "index.html" : req.url);
   if (!existsSync(f)) return res.writeHead(404).end();
@@ -44,7 +44,11 @@ if (mode === "click") {
   await page.mouse.click(box.x, box.y);
   pending = new Promise((r) => setTimeout(r, 14000)).then(() => "clicked; see screenshots");
 } else pending = send({ type: "identify", id: best.id });
-if (process.argv[3]) { await page.waitForTimeout(4000); await page.screenshot({ path: process.argv[3] }); }
+if (process.env.SAMPLE) {
+  await page.waitForTimeout(1800);
+  console.log("time 1.8s into listening:", await page.evaluate(() => +document.querySelector("#song").currentTime.toFixed(1)), "(started at 5)");
+}
+if (process.argv[3]) { await page.waitForTimeout(process.env.SAMPLE ? 1200 : 4000); await page.screenshot({ path: process.argv[3] }); }
 console.log("result:", await pending);
 if (mode === "click") await page.screenshot({ path: process.argv[3].replace(".png", "-result.png") });
 console.log("paused after:", await page.evaluate(() => document.querySelector("#song").paused));

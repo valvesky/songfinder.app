@@ -29,7 +29,8 @@
 - **Knows which video.** The video it will listen to gets outlined, so it's never a guess on a page with many videos. Hover a card in the popup to see which one is which.
 - **Starts the video for you.** Paused or muted? It plays, unmutes, listens, then puts things back.
 - **Pick the part to listen to.** Drag the two dots on the timeline, or type the start and end times.
-- **Skips GIFs.** Videos without an audio track (Tenor, Discord, MP4 "GIFs") are ignored.
+- **Skips GIFs.** Videos without an audio track (Tenor, Discord, MP4 "GIFs") are ignored, including ones hosted on another domain.
+- **Replays short clips.** Clips of 15 seconds or less restart from the beginning before listening.
 - **No server, no account.** Everything runs in the extension. Only a small audio fingerprint is sent for lookup.
 
 ## Install
@@ -59,6 +60,7 @@ node test/shazam.test.mjs some-song.opus      # fingerprint + lookup from a file
 node test/e2e.mjs <dir-with-index.html>       # real Chromium with the extension loaded
 node test/popup.mjs <dir> <out-prefix>        # drives the popup UI, segment picker included
 node test/silent.mjs <dir> <shot.png>         # silent videos must be ignored
+node test/crossorigin.mjs <dir>               # silent videos on another origin must be ignored
 node test/badge.mjs <dir> <shot.png>          # badge must sit exactly on each video's corner
 tools/build.sh                                # dist/songfinder-{chrome,firefox}-<version>.zip
 node tools/promo.mjs                          # X card + store screenshot

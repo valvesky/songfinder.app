@@ -6,7 +6,7 @@ const ICON = {
   note: '<svg viewBox="0 0 24 24"><path d="M9 17.5V6.2l10-2.2v10.5"/><circle cx="6.8" cy="17.5" r="2.7"/><circle cx="16.8" cy="14.5" r="2.7"/></svg>',
 };
 
-const MIN_LEN = 3, MAX_LEN = 30, DEFAULT_LEN = 10;
+const MIN_LEN = 3, MAX_LEN = 30, DEFAULT_LEN = 10, SHORT_CLIP = 15;
 
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 function parseTime(text) {
@@ -56,7 +56,8 @@ async function load() {
 // Two-handle range bar over the video's timeline, with editable start/end underneath.
 function rangeControl(v, onChange) {
   const duration = v.duration;
-  const state = { start: Math.min(Math.floor(v.time), Math.max(0, duration - MIN_LEN)), end: 0, touched: false };
+  const short = duration <= SHORT_CLIP; // short clips are replayed from the start
+  const state = { start: short ? 0 : Math.min(Math.floor(v.time), Math.max(0, duration - MIN_LEN)), end: 0, touched: short };
   state.end = Math.min(duration, state.start + DEFAULT_LEN);
 
   const root = document.createElement("div");
