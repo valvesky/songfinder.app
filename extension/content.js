@@ -28,18 +28,65 @@
 
   const isPlaying = (v) => !v.paused && !v.ended && v.readyState > 2;
 
-  function describe(v) {
-    const r = v.getBoundingClientRect();
+  // --- metadata: best-effort title + thumbnail for the popup ---------------------
+
+  const GENERIC = /\b(player|media|controls?)\b/i;
+  const cleanTitle = (t) =>
+    t.replace(/\s+/g, " ").replace(/^\(\d+\)\s*/, "")
+      .replace(/\s*[-|–—·]\s*(YouTube|Vimeo|Twitch|Dailymotion|Reddit|Facebook)$/i, "")
+      .replace(/\s+\/\s+X$/, "").trim().slice(0, 140);
+
+  function metaTitle(v) {
+    const own = v.title || v.getAttribute("aria-label");
+    if (own && own.trim().length > 2 && !GENERIC.test(own)) return cleanTitle(own);
+    let el = v.parentElement;
+    for (let i = 0; el && i < 10; i++, el = el.parentElement) {
+      const t = el.getAttribute("aria-label") || el.getAttribute("title");
+      if (t && t.length > 3 && t.length < 200 && !GENERIC.test(t)) return cleanTitle(t);
+      if (el.tagName === "ARTICLE" || el.getAttribute("role") === "article") {
+        const tx = el.querySelector('[data-testid="tweetText"]') || el.querySelector("h1,h2,h3");
+        if (tx?.textContent.trim()) return cleanTitle(tx.textContent);
+      }
+    }
+    // a video that fills the page is "the" video: use the page's own title
+    if (visibleArea(v) > 0.3 * innerWidth * innerHeight) {
+      const og = document.querySelector('meta[property="og:title"]')?.content;
+      const t = cleanTitle(og || document.title || "");
+      if (t) return t;
+    }
+    const src = v.currentSrc || v.src;
+    if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+      try {
+        const name = decodeURIComponent(new URL(src).pathname.split("/").pop() || "");
+        if (name) return name.replace(/\.[a-z0-9]{2,4}$/i, "").replace(/[._-]+/g, " ");
+      } catch {}
+    }
+    return null;
+  }
+
+  function thumbnail(v) {
+    if (v.poster) return v.poster;
+    try {
+      if (v.readyState < 2 || !v.videoWidth) return null;
+      const c = document.createElement("canvas");
+      c.width = 128;
+      c.height = Math.round((128 * v.videoHeight) / v.videoWidth);
+      c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+      return c.toDataURL("image/jpeg", 0.7); // throws if the video is cross-origin
+    } catch {
+      return null;
+    }
+  }
+
+  function describe(v, withThumb = false) {
     return {
       id: idOf(v),
       playing: isPlaying(v),
-      paused: v.paused,
-      muted: v.muted || v.volume === 0,
       visibleArea: Math.round(visibleArea(v)),
-      width: Math.round(r.width),
-      height: Math.round(r.height),
-      time: Math.round(v.currentTime),
-      duration: isFinite(v.duration) ? Math.round(v.duration) : null,
+      time: v.currentTime,
+      duration: isFinite(v.duration) ? v.duration : null,
+      title: metaTitle(v),
+      thumb: withThumb ? thumbnail(v) : null,
     };
   }
 
@@ -213,6 +260,9 @@
   // --- capture + identify --------------------------------------------------
 
   async function ensurePlaying(v) {
+    // Heard-or-nothing: an identification needs audible output.
+    if (v.muted) v.muted = false;
+    if (v.volume === 0) v.volume = 1;
     if (isPlaying(v)) return false;
     try {
       await v.play();
@@ -224,7 +274,7 @@
     return true;
   }
 
-  async function record(v) {
+  async function record(v, ms) {
     const stream = (v.captureStream || v.mozCaptureStream).call(v);
     const audio = stream.getAudioTracks();
     if (!audio.length) throw new Error("This video exposes no audio track (cross-origin or DRM?)");
@@ -233,7 +283,7 @@
     rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
     const done = new Promise((res) => (rec.onstop = res));
     rec.start(1000);
-    await new Promise((r) => setTimeout(r, RECORD_MS));
+    await new Promise((r) => setTimeout(r, ms));
     rec.stop();
     await done;
     return new Blob(chunks, { type: rec.mimeType });
@@ -257,20 +307,33 @@
 
   const busy = new WeakSet();
 
-  async function identify(v) {
+  const seek = (v, t) =>
+    new Promise((resolve) => {
+      const done = () => { v.removeEventListener("seeked", done); resolve(); };
+      v.addEventListener("seeked", done);
+      v.currentTime = t;
+      setTimeout(done, 3000);
+    });
+
+  // opts.start / opts.length (seconds) pick a segment; default is "from now, 10s".
+  async function identify(v, opts = {}) {
     if (busy.has(v)) return { ok: false, error: "Already listening." };
     busy.add(v);
-    let startedIt = false;
-    const started = Date.now();
+    const ms = Math.min(30, Math.max(3, opts.length || RECORD_MS / 1000)) * 1000;
+    const prevTime = v.currentTime;
+    let startedIt = false, seeked = false, started = 0;
     const progress = setInterval(() => {
-      const left = Math.max(0, Math.ceil((RECORD_MS - (Date.now() - started)) / 1000));
+      if (!started) return setBusy(v, "…");
+      const left = Math.max(0, Math.ceil((ms - (Date.now() - started)) / 1000));
       setBusy(v, left + "s");
       highlight(v, `♫ Listening… ${left}s`, 0);
     }, 250);
     try {
       slots.get(v)?.result?.remove();
       startedIt = await ensurePlaying(v);
-      const blob = await record(v);
+      if (typeof opts.start === "number") { seeked = true; await seek(v, opts.start); }
+      started = Date.now();
+      const blob = await record(v, ms);
       clearInterval(progress);
       setBusy(v, "…");
       highlight(v, "♫ Matching…", 0);
@@ -288,6 +351,7 @@
       unhighlight();
       busy.delete(v);
       if (startedIt) v.pause(); // leave it as we found it
+      if (seeked) v.currentTime = prevTime;
     }
   }
 
@@ -303,7 +367,7 @@
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     switch (msg?.type) {
       case "list-videos":
-        sendResponse(allVideos().map(describe));
+        sendResponse(allVideos().map((v) => describe(v, true)));
         break;
       case "highlight": {
         const v = find(msg.id);
@@ -325,7 +389,7 @@
       case "identify": {
         const v = find(msg.id);
         if (!v) return sendResponse({ ok: false, error: "Video no longer on page" });
-        identify(v).then(sendResponse);
+        identify(v, { start: msg.start, length: msg.length }).then(sendResponse);
         return true;
       }
     }

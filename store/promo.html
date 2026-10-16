@@ -25,12 +25,12 @@
     background:rgba(18,18,18,.55);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(16px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
   .bars{position:absolute;left:0;right:0;bottom:0;height:110px;display:flex;align-items:flex-end;gap:7px;padding:0 24px 22px}
   .bars i{flex:1;border-radius:6px;background:rgba(255,255,255,.55)}
-  .card{position:absolute;right:-30px;top:250px;width:400px;padding:22px;border-radius:30px;
+  .card{position:absolute;right:-30px;top:220px;width:400px;padding:22px;border-radius:30px;
     background:rgba(20,20,20,.55);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(26px) saturate(170%);
     box-shadow:0 30px 80px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.14)}
   .card .video{margin:0;font-size:17px}
   .card header{margin-bottom:16px}
-  .card button{font-size:18px;padding:13px}
+  .card button{font-size:15px}
   .card .result{font-size:19px;margin-top:14px}
   .card .meta{font-size:15px}
   .card .title{font-size:19px}
@@ -49,13 +49,15 @@ Austin Mahone &amp; Pitbull</div>
       <div class="bars" id="bars"></div></div>
     <div class="card">
       <header><span class="logo">♫</span><h1>find<b>Song</b>.app</h1></header>
-      <div class="video best"><div class="row"><span class="title">Video 1</span><span class="pill live">● playing</span></div>
-        <div class="meta">1280×720 · 84s/212s</div>
-        <button>♫  Identify song</button>
-        <div class="result">Mmm Yeah — Austin Mahone &amp; Pitbull<br><a>Open on Shazam</a></div></div>
-      <div class="video"><div class="row"><span class="title">Video 2</span><span class="pill">paused</span></div>
-        <div class="meta">320×180 · muted · 0s/30s</div></div>
-    </div>
+      <div class="video best">
+        <div class="top"><div class="thumb" style="background-image:linear-gradient(135deg,#243b6b,#d98aa8)"></div>
+          <div class="info"><div class="title">Austin Mahone - Mmm Yeah</div><span class="pill live">● playing</span></div></div>
+        <div class="range"><div class="bar"><div class="fill" style="left:22%;width:30%"></div><div class="now" style="left:12%"></div>
+          <div class="handle" style="left:22%"></div><div class="handle" style="left:52%"></div></div>
+          <div class="times"><span class="t">0:23</span><span class="len">10s</span><span class="t">0:33</span></div></div>
+        <div class="buttons"><button class="ghost"><svg viewBox="0 0 24 24"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg></button>
+          <button class="main"><svg viewBox="0 0 24 24"><path d="M9 17.5V6.2l10-2.2v10.5"/><circle cx="6.8" cy="17.5" r="2.7"/><circle cx="16.8" cy="14.5" r="2.7"/></svg><span>Identify song</span></button></div>
+        <div class="result">Mmm Yeah · Austin Mahone &amp; Pitbull<br><a>Open on Shazam</a></div></div>
   </div>
 </div>
 <script>
