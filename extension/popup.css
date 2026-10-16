@@ -109,3 +109,11 @@ button:disabled { opacity: .45; cursor: default; }
 .switch input:checked + .track { background: rgba(255, 255, 255, .28); }
 .switch input:checked + .track i { transform: translateX(14px); background: #fff; }
 .buttons { display: flex; gap: 8px; }
+
+footer { display: flex; justify-content: center; gap: 10px; padding-top: 4px; }
+footer a {
+  display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; color: var(--muted);
+  background: var(--glass); border: 1px solid var(--edge); transition: color .15s, background .15s, transform .15s;
+}
+footer a:hover { color: var(--fg); background: var(--glass-hi); transform: translateY(-1px); }
+footer svg { width: 16px; height: 16px; fill: currentColor; display: block; }

@@ -136,7 +136,7 @@
     .glass{background:rgba(18,18,18,.55);border:1px solid rgba(255,255,255,.22);
       backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%);
       box-shadow:0 8px 24px rgba(0,0,0,.4)}
-    .outline{position:fixed;border:2px solid rgba(255,255,255,.9);border-radius:18px;opacity:0;pointer-events:none;
+    .outline{position:absolute;border:2px solid rgba(255,255,255,.9);border-radius:18px;opacity:0;pointer-events:none;
       box-shadow:0 0 0 2px rgba(0,0,0,.55),0 0 28px rgba(255,255,255,.55);transition:opacity .2s}
     .tag{position:absolute;left:12px;top:12px;max-width:calc(100% - 24px);padding:8px 14px;border-radius:14px;white-space:pre-wrap}
     .slot{position:absolute;right:10px;top:10px;width:max-content;max-width:320px;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
@@ -168,53 +168,21 @@
     return { host, ui };
   }
 
-  // --- highlight: a transient outline over the chosen video (popup hover, listening) -----
-
-  const important = (css) => css.replace(/;/g, " !important;");
-  const outlineHost = makeHost("songfinder-outline",
-    important("position:fixed;inset:0;z-index:2147483647;pointer-events:none;display:block;"));
-  const outline = document.createElement("div");
-  outline.className = "outline";
-  outlineHost.ui.append(outline);
-
-  function mountOutline() {
-    const fs = document.fullscreenElement;
-    const parent = fs && fs.tagName !== "VIDEO" ? fs : document.documentElement;
-    if (outlineHost.host.parentNode !== parent) parent.appendChild(outlineHost.host);
-  }
-
-  let outlineTimer = 0;
-  function highlight(v, label, ms = 2500) {
-    if (!v || !v.isConnected) return;
-    mountOutline();
-    const r = v.getBoundingClientRect();
-    Object.assign(outline.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px", opacity: "1" });
-    outline.replaceChildren();
-    if (label) {
-      const tag = document.createElement("div");
-      tag.className = "tag glass";
-      tag.textContent = label;
-      outline.append(tag);
-    }
-    clearTimeout(outlineTimer);
-    if (ms) outlineTimer = setTimeout(unhighlight, ms);
-  }
-  function unhighlight() {
-    clearTimeout(outlineTimer);
-    outline.style.opacity = "0";
-  }
-
   // --- badges ----------------------------------------------------------------------
   // Each badge lives *inside* the video's own player container, absolutely positioned in its
   // top-right corner, so scrolling, transforms and fullscreen move it with the video for free.
   // Its position is only recomputed when the video or its container changes size.
 
+  const important = (css) => css.replace(/;/g, " !important;");
   let overlayOn = true;
-  const slots = new Map(); // video -> { host, el, badge, n, result, timer, anchor }
+  const slots = new Map(); // video -> { host, el, badge, n, outline, result, timer, anchor }
 
   function makeSlot(v) {
     const { host, ui } = makeHost("songfinder-badge",
       important("position:absolute;left:0;top:0;width:0;height:0;overflow:visible;z-index:2147483647;pointer-events:none;display:block;"));
+    const outline = document.createElement("div");
+    outline.className = "outline";
+    ui.append(outline);
     const el = document.createElement("div");
     el.className = "slot";
     const badge = document.createElement("button");
@@ -237,7 +205,7 @@
     for (const t of ["mousedown", "mouseup", "pointerdown", "pointerup", "dblclick"]) {
       badge.addEventListener(t, (e) => e.stopPropagation());
     }
-    const slot = { host, el, badge, n, result: null, timer: 0, anchor: null };
+    const slot = { host, el, badge, n, outline, result: null, timer: 0, anchor: null };
     slots.set(v, slot);
     return slot;
   }
@@ -265,35 +233,42 @@
     const vr = v.getBoundingClientRect();
     h.style.setProperty("left", vr.right - origin.left + "px", "important");
     h.style.setProperty("top", vr.top - origin.top + "px", "important");
+    // the outline covers the whole video; the host sits on its top-right corner
+    Object.assign(slot.outline.style, { left: -vr.width + "px", top: "0px", width: vr.width + "px", height: vr.height + "px" });
   }
 
   const eligible = (v) => {
-    if (!overlayOn || !v.isConnected) return false;
+    if (!v.isConnected) return false;
     const r = v.getBoundingClientRect();
     return r.width >= MIN_W && r.height >= MIN_H && hasAudio(v) !== false;
   };
 
   const resizeObserver = new ResizeObserver(() => schedule());
 
+  // Mount (once) and position a video's host. Used for badges and for the highlight outline.
+  function place(v, slot) {
+    if (!slot.host.isConnected) {
+      const anchor = mountPoint(v);
+      anchor.appendChild(slot.host);
+      if (slot.anchor && slot.anchor !== anchor) resizeObserver.unobserve(slot.anchor);
+      slot.anchor = anchor;
+      resizeObserver.observe(v);
+      if (anchor instanceof Element) resizeObserver.observe(anchor);
+    }
+    slot.host.style.setProperty("display", "block", "important");
+    setPos(slot, v);
+  }
+
   function reconcile() {
     for (const v of allVideos()) {
-      const ok = eligible(v);
       let slot = slots.get(v);
-      if (!ok) {
+      if (!eligible(v) || (!slot && !overlayOn)) {
         if (slot) slot.host.style.setProperty("display", "none", "important");
         continue;
       }
       slot ||= makeSlot(v);
-      if (!slot.host.isConnected) {
-        const anchor = mountPoint(v);
-        anchor.appendChild(slot.host);
-        if (slot.anchor && slot.anchor !== anchor) resizeObserver.unobserve(slot.anchor);
-        slot.anchor = anchor;
-        resizeObserver.observe(v);
-        if (anchor instanceof Element) resizeObserver.observe(anchor);
-      }
-      slot.host.style.setProperty("display", "block", "important");
-      setPos(slot, v);
+      slot.el.style.display = overlayOn ? "" : "none"; // the switch hides the badge only
+      place(v, slot);
     }
     for (const [v, s] of slots) {
       if (!v.isConnected) {
@@ -302,6 +277,32 @@
         slots.delete(v);
       }
     }
+  }
+
+  // --- highlight: a glowing outline over the chosen video (popup hover, listening) ----
+  // Lives in the same anchored host as the badge, so it follows the video with no tracking.
+
+  let outlineTimer = 0;
+  function highlight(v, label, ms = 2500) {
+    if (!v || !v.isConnected) return;
+    const slot = slots.get(v) || makeSlot(v);
+    if (!overlayOn) slot.el.style.display = "none";
+    place(v, slot);
+    for (const s of slots.values()) if (s !== slot) s.outline.style.opacity = "0";
+    slot.outline.replaceChildren();
+    if (label) {
+      const tag = document.createElement("div");
+      tag.className = "tag glass";
+      tag.textContent = label;
+      slot.outline.append(tag);
+    }
+    slot.outline.style.opacity = "1";
+    clearTimeout(outlineTimer);
+    if (ms) outlineTimer = setTimeout(unhighlight, ms);
+  }
+  function unhighlight() {
+    clearTimeout(outlineTimer);
+    for (const s of slots.values()) s.outline.style.opacity = "0";
   }
 
   let raf = 0, last = 0;
