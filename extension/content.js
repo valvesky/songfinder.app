@@ -126,55 +126,67 @@
     };
   }
 
-  // --- overlay (shadow DOM so page CSS can't touch it) -----------------------
+  // --- shared styles (shadow DOM so page CSS can't touch the UI) ------------------
 
-  const host = document.createElement("div");
-  host.style.cssText = "all:initial;position:fixed;inset:0;z-index:2147483647;pointer-events:none;";
-  const shadow = host.attachShadow({ mode: "closed" });
-  shadow.innerHTML = `
-    <style>
-      :host{all:initial}
-      *{box-sizing:border-box}
-      .ui{font:12px/1.4 "JetBrainsMono Nerd Font","JetBrains Mono",ui-monospace,monospace;color:#eeeae4}
-      .glass{background:rgba(18,18,18,.55);border:1px solid rgba(255,255,255,.22);
-        backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%);
-        box-shadow:0 8px 24px rgba(0,0,0,.4)}
-      .outline{position:fixed;border:2px solid rgba(255,255,255,.9);border-radius:18px;opacity:0;
-        box-shadow:0 0 0 2px rgba(0,0,0,.55),0 0 28px rgba(255,255,255,.55);transition:opacity .2s}
-      .tag{position:absolute;left:12px;top:12px;max-width:calc(100% - 24px);padding:8px 14px;border-radius:14px;white-space:pre-wrap}
-      .slot{position:fixed;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-      .badge{color:#eeeae4;font:inherit;pointer-events:auto;position:relative;width:34px;height:34px;padding:0;border-radius:11px;cursor:pointer;
-        display:grid;place-items:center;opacity:.8;transition:opacity .15s,transform .15s}
-      .badge img{width:24px;height:24px;border-radius:7px;display:block}
-      .badge:hover,.slot.busy .badge{opacity:1;transform:scale(1.06)}
-      .badge .n{position:absolute;inset:0;display:none;place-items:center;border-radius:11px;font-weight:700;
-        background:rgba(18,18,18,.78)}
-      .slot.busy .badge .n{display:grid}
-      .badge::after{content:"Find song";position:absolute;right:42px;top:50%;transform:translateY(-50%);padding:4px 9px;border-radius:9px;
-        background:rgba(18,18,18,.8);border:1px solid rgba(255,255,255,.2);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s}
-      .badge:hover::after{opacity:1}
-      .slot.busy .badge::after{display:none}
-      .result{pointer-events:auto;max-width:300px;padding:10px 12px;border-radius:14px;word-break:break-word}
-      .result b{display:block;font-weight:700}
-      .result a{color:#8caed6;text-decoration:none;display:inline-block;margin-top:4px}
-      .result.err{color:#ff8a80}
-    </style>
-    <div class="ui"><div class="outline" id="outline"></div></div>`;
-  const ui = shadow.querySelector(".ui");
-  const outline = shadow.getElementById("outline");
+  const sheet = new CSSStyleSheet();
+  sheet.replaceSync(`
+    :host{all:initial}
+    *{box-sizing:border-box}
+    .ui{font:12px/1.4 "JetBrainsMono Nerd Font","JetBrains Mono",ui-monospace,monospace;color:#eeeae4}
+    .glass{background:rgba(18,18,18,.55);border:1px solid rgba(255,255,255,.22);
+      backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%);
+      box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    .outline{position:fixed;border:2px solid rgba(255,255,255,.9);border-radius:18px;opacity:0;pointer-events:none;
+      box-shadow:0 0 0 2px rgba(0,0,0,.55),0 0 28px rgba(255,255,255,.55);transition:opacity .2s}
+    .tag{position:absolute;left:12px;top:12px;max-width:calc(100% - 24px);padding:8px 14px;border-radius:14px;white-space:pre-wrap}
+    .slot{position:absolute;right:10px;top:10px;width:max-content;max-width:320px;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+    .badge{color:#eeeae4;font:inherit;pointer-events:auto;position:relative;width:34px;height:34px;padding:0;border-radius:11px;cursor:pointer;
+      display:grid;place-items:center;opacity:.8;transition:opacity .15s,transform .15s}
+    .badge img{width:24px;height:24px;border-radius:7px;display:block}
+    .badge:hover,.slot.busy .badge{opacity:1;transform:scale(1.06)}
+    .badge .n{position:absolute;inset:0;display:none;place-items:center;border-radius:11px;font-weight:700;
+      background:rgba(18,18,18,.78)}
+    .slot.busy .badge .n{display:grid}
+    .badge::after{content:"Find song";position:absolute;right:42px;top:50%;transform:translateY(-50%);padding:4px 9px;border-radius:9px;
+      background:rgba(18,18,18,.8);border:1px solid rgba(255,255,255,.2);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s}
+    .badge:hover::after{opacity:1}
+    .slot.busy .badge::after{display:none}
+    .result{pointer-events:auto;max-width:300px;padding:10px 12px;border-radius:14px;word-break:break-word}
+    .result b{display:block;font-weight:700}
+    .result a{color:#8caed6;text-decoration:none;display:inline-block;margin-top:4px}
+    .result.err{color:#ff8a80}
+  `);
 
-  function mountHost() {
-    const fs = document.fullscreenElement;
-    const parent = fs && fs.tagName !== "VIDEO" ? fs : document.documentElement;
-    if (host.parentNode !== parent) parent.appendChild(host);
+  function makeHost(tag, css) {
+    const host = document.createElement(tag);
+    host.style.cssText = css;
+    const shadow = host.attachShadow({ mode: "closed" });
+    shadow.adoptedStyleSheets = [sheet];
+    const ui = document.createElement("div");
+    ui.className = "ui";
+    shadow.append(ui);
+    return { host, ui };
   }
 
-  // --- highlight -----------------------------------------------------------
+  // --- highlight: a transient outline over the chosen video (popup hover, listening) -----
+
+  const important = (css) => css.replace(/;/g, " !important;");
+  const outlineHost = makeHost("songfinder-outline",
+    important("position:fixed;inset:0;z-index:2147483647;pointer-events:none;display:block;"));
+  const outline = document.createElement("div");
+  outline.className = "outline";
+  outlineHost.ui.append(outline);
+
+  function mountOutline() {
+    const fs = document.fullscreenElement;
+    const parent = fs && fs.tagName !== "VIDEO" ? fs : document.documentElement;
+    if (outlineHost.host.parentNode !== parent) parent.appendChild(outlineHost.host);
+  }
 
   let outlineTimer = 0;
   function highlight(v, label, ms = 2500) {
     if (!v || !v.isConnected) return;
-    mountHost();
+    mountOutline();
     const r = v.getBoundingClientRect();
     Object.assign(outline.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px", opacity: "1" });
     outline.replaceChildren();
@@ -192,12 +204,17 @@
     outline.style.opacity = "0";
   }
 
-  // --- badges ----------------------------------------------------------------
+  // --- badges ----------------------------------------------------------------------
+  // Each badge lives *inside* the video's own player container, absolutely positioned in its
+  // top-right corner, so scrolling, transforms and fullscreen move it with the video for free.
+  // Its position is only recomputed when the video or its container changes size.
 
   let overlayOn = true;
-  const slots = new Map(); // video -> { el, badge, n, result, timer }
+  const slots = new Map(); // video -> { host, el, badge, n, result, timer, anchor }
 
   function makeSlot(v) {
+    const { host, ui } = makeHost("songfinder-badge",
+      important("position:absolute;left:0;top:0;width:0;height:0;overflow:visible;z-index:2147483647;pointer-events:none;display:block;"));
     const el = document.createElement("div");
     el.className = "slot";
     const badge = document.createElement("button");
@@ -210,6 +227,7 @@
     n.className = "n";
     badge.append(img, n);
     el.append(badge);
+    ui.append(el);
     badge.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -219,47 +237,87 @@
     for (const t of ["mousedown", "mouseup", "pointerdown", "pointerup", "dblclick"]) {
       badge.addEventListener(t, (e) => e.stopPropagation());
     }
-    ui.append(el);
-    const slot = { el, badge, n, result: null, timer: 0 };
+    const slot = { host, el, badge, n, result: null, timer: 0, anchor: null };
     slots.set(v, slot);
     return slot;
   }
 
-  function placeBadges() {
-    const mounted = host.isConnected;
-    if (!overlayOn) {
-      for (const s of slots.values()) s.el.style.display = "none";
-      return;
+  const near = (a, b) => Math.abs(a - b) <= 3;
+
+  // The outermost ancestor that is exactly the video's size is "the player": mounting there (as the
+  // last child) keeps the badge above the site's own control layers.
+  function mountPoint(v) {
+    const vr = v.getBoundingClientRect();
+    let node = v.parentElement || v.getRootNode();
+    for (let i = 0; i < 6 && node.parentElement; i++) {
+      const r = node.parentElement.getBoundingClientRect();
+      if (!(near(r.left, vr.left) && near(r.top, vr.top) && near(r.right, vr.right) && near(r.bottom, vr.bottom))) break;
+      node = node.parentElement;
     }
-    const live = new Set();
-    for (const v of candidates()) {
-      const r = v.getBoundingClientRect();
-      const ok = v.isConnected && r.width >= MIN_W && r.height >= MIN_H && visibleArea(v) > 0 &&
-        getComputedStyle(v).visibility !== "hidden";
-      if (!ok) continue;
-      live.add(v);
-      const slot = slots.get(v) || makeSlot(v);
-      if (!mounted) mountHost();
-      slot.el.style.display = "";
-      const right = Math.min(r.right, innerWidth), top = Math.max(r.top, 0);
-      slot.el.style.right = Math.max(0, innerWidth - right) + 10 + "px";
-      slot.el.style.top = top + 10 + "px";
-    }
-    for (const [v, s] of slots) {
-      if (!live.has(v)) {
-        if (!v.isConnected) { s.el.remove(); slots.delete(v); } else s.el.style.display = "none";
-      }
-    }
-    if (live.size) mountHost();
+    return node;
   }
 
-  let raf = 0;
-  const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; placeBadges(); }); };
-  addEventListener("scroll", schedule, { capture: true, passive: true });
+  function setPos(slot, v) {
+    const h = slot.host;
+    h.style.setProperty("left", "0px", "important");
+    h.style.setProperty("top", "0px", "important");
+    const origin = h.getBoundingClientRect(); // where the containing block's (0,0) is on screen
+    const vr = v.getBoundingClientRect();
+    h.style.setProperty("left", vr.right - origin.left + "px", "important");
+    h.style.setProperty("top", vr.top - origin.top + "px", "important");
+  }
+
+  const eligible = (v) => {
+    if (!overlayOn || !v.isConnected) return false;
+    const r = v.getBoundingClientRect();
+    return r.width >= MIN_W && r.height >= MIN_H && hasAudio(v) !== false;
+  };
+
+  const resizeObserver = new ResizeObserver(() => schedule());
+
+  function reconcile() {
+    for (const v of allVideos()) {
+      const ok = eligible(v);
+      let slot = slots.get(v);
+      if (!ok) {
+        if (slot) slot.host.style.setProperty("display", "none", "important");
+        continue;
+      }
+      slot ||= makeSlot(v);
+      if (!slot.host.isConnected) {
+        const anchor = mountPoint(v);
+        anchor.appendChild(slot.host);
+        if (slot.anchor && slot.anchor !== anchor) resizeObserver.unobserve(slot.anchor);
+        slot.anchor = anchor;
+        resizeObserver.observe(v);
+        if (anchor instanceof Element) resizeObserver.observe(anchor);
+      }
+      slot.host.style.setProperty("display", "block", "important");
+      setPos(slot, v);
+    }
+    for (const [v, s] of slots) {
+      if (!v.isConnected) {
+        s.host.remove();
+        resizeObserver.unobserve(v);
+        slots.delete(v);
+      }
+    }
+  }
+
+  let raf = 0, last = 0;
+  function schedule() {
+    if (raf) return;
+    // at most ~4 reconciles a second, but never later than the next frame after a quiet period
+    const wait = Math.max(0, 250 - (performance.now() - last));
+    raf = setTimeout(() => requestAnimationFrame(() => { raf = 0; last = performance.now(); reconcile(); }), wait);
+  }
   addEventListener("resize", schedule, { passive: true });
-  document.addEventListener("fullscreenchange", () => { mountHost(); schedule(); });
+  document.addEventListener("fullscreenchange", schedule);
+  for (const type of ["loadedmetadata", "loadeddata", "playing", "emptied", "resize"]) {
+    document.addEventListener(type, (e) => e.target instanceof HTMLVideoElement && schedule(), true);
+  }
   new MutationObserver(schedule).observe(document, { childList: true, subtree: true });
-  setInterval(schedule, 500); // catches layout changes the observers miss
+  addEventListener("load", () => { schedule(); setTimeout(schedule, 1500); });
 
   function setBusy(v, text) {
     const s = slots.get(v);

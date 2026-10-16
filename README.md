@@ -59,6 +59,7 @@ node test/shazam.test.mjs some-song.opus      # fingerprint + lookup from a file
 node test/e2e.mjs <dir-with-index.html>       # real Chromium with the extension loaded
 node test/popup.mjs <dir> <out-prefix>        # drives the popup UI, segment picker included
 node test/silent.mjs <dir> <shot.png>         # silent videos must be ignored
+node test/badge.mjs <dir> <shot.png>          # badge must sit exactly on each video's corner
 tools/build.sh                                # dist/songfinder-{chrome,firefox}-<version>.zip
 node tools/promo.mjs                          # X card + store screenshot
 ```
